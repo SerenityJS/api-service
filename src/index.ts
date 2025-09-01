@@ -2,6 +2,7 @@ import { Database } from "bun:sqlite";
 import { Server } from "node:http";
 
 import express, { type Express } from "express";
+import cors from "cors";
 
 import { Routes } from "./routes";
 import { Services, type Service } from "./services";
@@ -37,6 +38,7 @@ class RestAPIService {
   public constructor() {
     // Enable JSON body parsing middleware
     this.express.use(express.json());
+    this.express.use(cors());
 
     // Iterate over each route and register it with the Express app
     for (const route of Routes) {
