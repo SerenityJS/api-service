@@ -20,10 +20,27 @@ class GHFetch extends Service {
   */
   private readonly query = "topic:serenityjs-plugin";
 
+  /**
+   * The time interval (in milliseconds) to refresh the plugin list from GitHub (default: 5 minutes)
+  */
+  private refreshTime = 5 * 60 * 1000;
+
+  /**
+   * The time interval (in milliseconds) to clear the plugin cache (default: 1 hour)
+  */
+  private cacheClearTime = 60 * 60 * 1000;
+
   public constructor(api: RestAPIService) {
     super(api);
 
+    // Fetch the plugins immediately
     this.fetchPlugins();
+
+    // Set an interval to fetch the plugins periodically
+    setInterval(() => this.fetchPlugins(), this.refreshTime);
+
+    // Set an interval to clear the plugin cache periodically
+    setInterval(() => {this.api.clearPluginCache(); this.fetchPlugins()}, this.cacheClearTime);
   }
 
   public async fetchPlugins(): Promise<any> {

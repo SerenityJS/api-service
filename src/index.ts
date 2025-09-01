@@ -9,14 +9,29 @@ import type { StoredPlugin } from "./types";
 import type { Plugin } from "./plugin";
 
 class RestAPIService {
+  /**
+   * The Express application instance
+  */
   private readonly express: Express = express();
 
+  /**
+   * The HTTP server instance
+  */
   private readonly server: Server = this.express.listen(4000);
 
+  /**
+   * The map of service instances
+  */
   private readonly services = new Map<string, Service>();
 
+  /**
+   * The SQLite database instance
+  */
   private readonly db: Database = new Database("plugins.db");
 
+  /**
+   * The in-memory cache of plugins
+  */
   private readonly plugins = new Map<number, Plugin>();
 
   public constructor() {
@@ -124,6 +139,11 @@ class RestAPIService {
   public addCachedPlugin(plugin: Plugin): void {
     // Add a plugin to the in-memory cache
     this.plugins.set(plugin.id, plugin);
+  }
+
+  public clearPluginCache(): void {
+    // Clear the in-memory cache of plugins
+    this.plugins.clear();
   }
 
   public isPluginApproved(id: number): boolean {
