@@ -83,6 +83,7 @@ class GHFetch extends Service {
               avatar_url: repo.owner.avatar_url,
               contributions: 0,
             },
+            branch: repo.default_branch,
             url: repo.html_url,
             approved: false,
           };

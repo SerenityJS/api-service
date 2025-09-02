@@ -24,6 +24,11 @@ class Plugin implements StoredPlugin {
   public readonly url: string;
 
   /**
+   * The default branch of the plugin repository (assumed to be "main")
+  */
+  public readonly branch: string = "main";
+
+  /**
    * Whether the plugin has been approved for listing
   */
   public readonly approved: boolean;
@@ -64,6 +69,7 @@ class Plugin implements StoredPlugin {
     this.name = data.name;
     this.owner = data.owner;
     this.url = data.url;
+    this.branch = repository.default_branch;
     this.approved = data.approved;
 
     // Load additional data from the repository object
@@ -156,7 +162,7 @@ class Plugin implements StoredPlugin {
 
   public static async getLogoURL(plugin: StoredPlugin): Promise<string> {
     // The logo URL is assumed to be at a standard location in the repository
-    const url = `https://raw.githubusercontent.com/${plugin.owner.username}/${plugin.name}/main/public/logo.png`;
+    const url = `https://raw.githubusercontent.com/${plugin.owner.username}/${plugin.name}/${plugin.branch}/public/logo.png`;
 
     try {
       // Check if the logo exists by making a HEAD request
@@ -171,7 +177,7 @@ class Plugin implements StoredPlugin {
 
   public static async getBannerURL(plugin: StoredPlugin): Promise<string | null> {
     // The banner URL is assumed to be at a standard location in the repository
-    const url = `https://raw.githubusercontent.com/${plugin.owner.username}/${plugin.name}/main/public/banner.png`;
+    const url = `https://raw.githubusercontent.com/${plugin.owner.username}/${plugin.name}/${plugin.branch}/public/banner.png`;
 
     try {
       // Check if the banner exists by making a HEAD request
@@ -187,7 +193,7 @@ class Plugin implements StoredPlugin {
   public static async getReadme(plugin: StoredPlugin): Promise<string | null> {
     try {
       // Get the readme file from the repository
-      const response = await axios.get<string>(`https://raw.githubusercontent.com/${plugin.owner.username}/${plugin.name}/main/README.md`, {
+      const response = await axios.get<string>(`https://raw.githubusercontent.com/${plugin.owner.username}/${plugin.name}/${plugin.branch}/README.md`, {
         headers: { Authorization: `Bearer ${process.env.GITHUB_TOKEN ?? ""}` },
       });
 
@@ -202,13 +208,15 @@ class Plugin implements StoredPlugin {
   public static async getPackageJSON(plugin: StoredPlugin): Promise<{ version: string, keywords: Array<string> } | null> {
     try {
       // Get the package.json file from the repository
-      const response = await axios.get<{ version: string, keywords: Array<string> }>(`https://raw.githubusercontent.com/${plugin.owner.username}/${plugin.name}/main/package.json`, {
+      const response = await axios.get<{ version: string, keywords: Array<string> }>(`https://raw.githubusercontent.com/${plugin.owner.username}/${plugin.name}/${plugin.branch}/package.json`, {
         headers: { Authorization: `Bearer ${process.env.GITHUB_TOKEN ?? ""}` },
       });
 
       // Return the package.json content
       return response.data;
     } catch {
+      console.log("Failed to fetch package.json");
+
       // Return null if the request failed
       return null;
     }
@@ -223,7 +231,7 @@ class Plugin implements StoredPlugin {
     for (let i = 1; i <= 10; i++) {
       try {
         // Construct the image URL
-        const url = `https://raw.githubusercontent.com/${this.owner.username}/${this.name}/main/public/gallery/image${i}.png`;
+        const url = `https://raw.githubusercontent.com/${this.owner.username}/${this.name}/${this.branch}/public/gallery/image${i}.png`;
 
         // Check if the image exists by making a HEAD request
         const response = await axios.head(url);

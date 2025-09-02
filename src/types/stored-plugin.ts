@@ -5,6 +5,7 @@ interface StoredPlugin {
   name: string;
   owner: PluginContributor;
   url: string;
+  branch: string;
   approved: boolean;
 }
 

@@ -88,7 +88,8 @@ class RestAPIService {
         approved BOOLEAN DEFAULT 0,
         name TEXT NOT NULL,
         owner TEXT NOT NULL,
-        url TEXT NOT NULL
+        url TEXT NOT NULL,
+        branch TEXT DEFAULT 'main'
       );`).run();
   }
 
@@ -102,8 +103,8 @@ class RestAPIService {
 
   public addStoredPlugin(plugin: StoredPlugin): void {
     // Insert a new plugin into the database
-    this.db.prepare("INSERT INTO plugins (id, name, owner, url, approved) VALUES (?, ?, ?, ?, ?)")
-      .run(plugin.id, plugin.name, JSON.stringify(plugin.owner), plugin.url, plugin.approved);
+    this.db.prepare("INSERT INTO plugins (id, name, owner, url, approved, branch) VALUES (?, ?, ?, ?, ?, ?)")
+      .run(plugin.id, plugin.name, JSON.stringify(plugin.owner), plugin.url, plugin.approved, plugin.branch);
   }
 
   public getStoredPlugin(id: number): StoredPlugin | null {
@@ -116,6 +117,7 @@ class RestAPIService {
       name: row.name,
       owner: JSON.parse(row.owner),
       url: row.url,
+      branch: row.branch,
       approved: row.approved === 1,
     } : null;
   }
@@ -128,7 +130,14 @@ class RestAPIService {
     // Iterate over the plugin properties and prepare the fields and values
     for (const [key, value] of Object.entries(plugin)) {
       fields.push(`${key} = ?`);
-      values.push(value);
+
+      // Check if the value is an object and needs to be stringified
+      if (key === "owner" && typeof value === "object") {
+        values.push(JSON.stringify(value));
+        continue;
+      } else {
+        values.push(value as string | number | boolean);
+      }
     }
 
     // Add the id to the values array for the WHERE clause
