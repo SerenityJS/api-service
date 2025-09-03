@@ -286,13 +286,15 @@ class Plugin implements StoredPlugin {
         params: { per_page: 100 },
       });
 
+      console.log(response.data)
+
       // Return the commit history
       return response.data.map(commit => ({
         sha: commit.sha,
         html_url: commit.html_url,
         message: commit.commit.message,
         date: commit.commit.author.date,
-        author: commit.commit.author.name,
+        author: commit.author?.login || commit.commit.author.name,
       }));
     } catch {
       // Return an empty array if the request failed
