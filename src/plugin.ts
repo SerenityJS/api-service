@@ -1,6 +1,7 @@
 import axios from "axios";
 
-import type { PluginContributor, PluginRelease, Repository, RepositoryContributor, RepositoryRelease, StoredPlugin } from "./types";
+import type { PluginCommit, PluginContributor, PluginRelease, Repository, RepositoryContributor, RepositoryRelease, StoredPlugin } from "./types";
+import type { RepositoryCommit } from "./types/repository-commit";
 
 class Plugin implements StoredPlugin {
   /**
@@ -41,6 +42,10 @@ class Plugin implements StoredPlugin {
 
   public downloads: number | null = null;
 
+  public forks: number | null = null;
+
+  public issues: number | null = null;
+
   public keywords: Array<string> | null = null;
 
   public logo: string | null = null;
@@ -57,6 +62,8 @@ class Plugin implements StoredPlugin {
 
   public contributors: Array<PluginContributor> = [];
 
+  public commits: Array<PluginCommit> = [];
+
   public releases: Array<PluginRelease> = [];
 
   /**
@@ -69,12 +76,15 @@ class Plugin implements StoredPlugin {
     this.name = data.name;
     this.owner = data.owner;
     this.url = data.url;
-    this.branch = repository.default_branch;
     this.approved = data.approved;
+    
 
     // Load additional data from the repository object
     this.description = repository.description;
+    this.branch = repository.default_branch;
     this.stars = repository.stargazers_count;
+    this.forks = repository.forks_count;
+    this.issues = repository.open_issues_count;
     this.published = repository.created_at;
     this.updated = repository.updated_at;
   }
@@ -89,8 +99,9 @@ class Plugin implements StoredPlugin {
     // Fetch the banner URL
     plugin.banner = await this.getBannerURL(data);
 
-    // Fetch the releases & map the total downloads
+    // Fetch the releases, commits & map the total downloads
     plugin.releases = await this.getReleases(data);
+    plugin.commits = await this.getCommitHistory(data);
     plugin.downloads = plugin.releases.reduce((acc, release) => acc + release.assets.reduce((a, asset) => a + asset.download_count, 0), 0);
 
     // Fetch the contributors
@@ -127,6 +138,7 @@ class Plugin implements StoredPlugin {
         url: release.html_url,
         description: release.body ?? "",
         prerelease: release.prerelease,
+        date: release.published_at,
         assets: release.assets.map((asset) => ({
           name: asset.name,
           size: asset.size,
@@ -263,6 +275,28 @@ class Plugin implements StoredPlugin {
     } catch {
       // Return null if the request failed
       return null;
+    }
+  }
+
+  public static async getCommitHistory(plugin: StoredPlugin): Promise<Array<PluginCommit>> {
+    try {
+      // Get the commit history from GitHub
+      const response = await axios.get<Array<RepositoryCommit>>(`https://api.github.com/repos/${plugin.owner.username}/${plugin.name}/commits`, {
+        headers: { Authorization: `Bearer ${process.env.GITHUB_TOKEN ?? ""}` },
+        params: { per_page: 100 },
+      });
+
+      // Return the commit history
+      return response.data.map(commit => ({
+        sha: commit.sha,
+        html_url: commit.html_url,
+        message: commit.commit.message,
+        date: commit.commit.author.date,
+        author: commit.commit.author.name,
+      }));
+    } catch {
+      // Return an empty array if the request failed
+      return [];
     }
   }
 }

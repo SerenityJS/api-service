@@ -1,11 +1,10 @@
-import type { StoredPlugin } from "./stored-plugin";
-
 interface PluginRelease {
   name: string;
   tag: string;
   url: string;
   description: string;
   prerelease: boolean;
+  date: string;
   assets: Array<PluginReleaseAsset>;
 }
 
@@ -23,4 +22,12 @@ interface PluginContributor {
   contributions: number;
 }
 
-export type { PluginRelease, PluginReleaseAsset, PluginContributor };
+interface PluginCommit {
+  sha: string;
+  html_url: string;
+  message: string;
+  date: string;
+  author: string;
+}
+
+export type { PluginRelease, PluginReleaseAsset, PluginContributor, PluginCommit };
